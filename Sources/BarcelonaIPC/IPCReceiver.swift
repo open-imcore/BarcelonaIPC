@@ -12,6 +12,20 @@ import Swexy
 @_silgen_name("bootstrap_check_in")
 func bootstrap_check_in(_ bootstrap_port: mach_port_t, _ service_name: UnsafePointer<CChar>, _ port: UnsafeMutablePointer<mach_port_t>) -> kern_return_t
 
+#if os(iOS)
+public typealias PortMessage = NSObject
+
+private extension PortMessage {
+    var components: [Any]? {
+        self.value(forKey: "components") as? [Any]
+    }
+    
+    var sendPort: Port? {
+        self.value(forKey: "sendPort") as? Port
+    }
+}
+#endif
+
 public class IPCReceiver<PayloadType: RawRepresentable>: IPCWrapper<PayloadType>, PortDelegate where PayloadType.RawValue == UInt, PayloadType: Codable {
     public typealias ReceiverCallback = (Payload, IPCSender<PayloadType>?, IPCReceiver) -> ()
     
