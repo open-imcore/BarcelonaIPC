@@ -14,6 +14,9 @@ func bootstrap_register(_ bootstrap: mach_port_t, _ name: UnsafePointer<CChar>, 
 @_silgen_name("bootstrap_look_up")
 func bootstrap_look_up(_ bootstrap: mach_port_t, _ name: UnsafePointer<CChar>, _ port: UnsafeMutablePointer<mach_port_t>) -> kern_return_t
 
+@_silgen_name("bootstrap_look_up2")
+func bootstrap_look_up2(_ bootstrap: mach_port_t, _ name: UnsafePointer<CChar>, _ port: UnsafeMutablePointer<mach_port_t>, _ target_pid: pid_t, flags: UInt64) -> kern_return_t
+
 internal let decoder = JSONDecoder()
 internal let encoder = JSONEncoder()
 

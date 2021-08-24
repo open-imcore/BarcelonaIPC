@@ -1,0 +1,16 @@
+{
+  "object": {
+    "pins": [
+      {
+        "package": "Swexy",
+        "repositoryURL": "https://github.com/EricRabil/Swexy",
+        "state": {
+          "branch": null,
+          "revision": "a9d808e3f53c57ddab99c1d1643778d3b6a36187",
+          "version": "1.0.1"
+        }
+      }
+    ]
+  },
+  "version": 1
+}

@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import Swexy
 
 @_silgen_name("bootstrap_check_in")
 func bootstrap_check_in(_ bootstrap_port: mach_port_t, _ service_name: UnsafePointer<CChar>, _ port: UnsafeMutablePointer<mach_port_t>) -> kern_return_t
@@ -25,13 +26,13 @@ public class IPCReceiver<PayloadType: RawRepresentable>: IPCWrapper<PayloadType>
             return IPCReceiver(port: IPCWrapPort(existingPort), mine: true, handleResponse: responseHandler)
         }
         
-        let port = IPCReceivePort()
+        let receiver = IPCReceiver(port: IPCReceivePort(), mine: true, handleResponse: responseHandler)
         
-        guard bootstrap_register(bootstrap_port, "com.barcelona.js-server", port.machPort) == KERN_SUCCESS else {
+        guard receiver.registerPort(withName: name) == KERN_SUCCESS else {
             fatalError("failed to register with bootstrap")
         }
         
-        return IPCReceiver(port: port, mine: true, handleResponse: responseHandler)
+        return receiver
     }
     
     public let handleResponse: ReceiverCallback
@@ -52,6 +53,20 @@ public class IPCReceiver<PayloadType: RawRepresentable>: IPCWrapper<PayloadType>
             handleResponse(payload, IPCSender(port: sendPort, mine: false), self)
         } else {
             handleResponse(payload, nil, self)
+        }
+    }
+    
+    public func registerPort(withName name: String) -> kern_return_t {
+        guard let port = port as? NSMachPort else {
+            return -1
+        }
+        
+        return bootstrap_register(bootstrap_port, name, port.machPort)
+    }
+    
+    public func registerPort(withName name: String, forUID uid: uid_t) throws -> kern_return_t {
+        try xpc_impersonate_user(uid) {
+            self.registerPort(withName: name)
         }
     }
 }
