@@ -22,7 +22,13 @@ public class IPCSender<PayloadType: RawRepresentable>: IPCWrapper<PayloadType> w
         return IPCSender(port: NSMachPort(machPort: send_port), mine: true)
     }
     
+    open func port(_ port: Port, attemptedToSendPayloadButWasInvalidated payload: Payload) {}
+    
     internal func send(payload: Payload, fromPort from: Port?) {
+        if !port.isValid {
+            return port(port, attemptedToSendPayloadButWasInvalidated: payload)
+        }
+        
         port.send(before: Date(timeIntervalSinceNow: 0), components: [try! encoder.encode(payload)], from: from, reserved: 0)
     }
     
