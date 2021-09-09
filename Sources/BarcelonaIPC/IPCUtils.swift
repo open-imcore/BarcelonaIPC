@@ -20,14 +20,23 @@ func bootstrap_look_up2(_ bootstrap: mach_port_t, _ name: UnsafePointer<CChar>, 
 internal let decoder = JSONDecoder()
 internal let encoder = JSONEncoder()
 
-internal func IPCWrapPort(_ port: mach_port_t, loop: RunLoop) -> NSMachPort {
+internal func IPCWrapPort(_ port: mach_port_t, loop: CFRunLoop) -> NSMachPort {
     let port = NSMachPort(machPort: port)
-    loop.add(port, forMode: .default)
+    let source = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, port, 0)
+    
+    CFRunLoopAddSource(loop, source, .commonModes)
+    
+    var observer: NSObjectProtocol?
+    observer = NotificationCenter.default.addObserver(forName: Port.didBecomeInvalidNotification, object: port, queue: .main) { notification in
+        CFRunLoopRemoveSource(loop, source, .commonModes)
+        NotificationCenter.default.removeObserver(observer!)
+        observer = nil
+    }
     
     return port
 }
 
-internal func IPCReceivePort(loop: RunLoop) -> NSMachPort {
+internal func IPCReceivePort(loop: CFRunLoop) -> NSMachPort {
     var rcv_port: mach_port_name_t = 0
     
     guard mach_port_allocate(mach_task_self_, MACH_PORT_RIGHT_RECEIVE, &rcv_port) == KERN_SUCCESS else {

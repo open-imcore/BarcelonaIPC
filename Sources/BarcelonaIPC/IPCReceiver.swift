@@ -26,14 +26,20 @@ private extension PortMessage {
 }
 #endif
 
+public extension CFRunLoop {
+    static var main: CFRunLoop {
+        CFRunLoopGetMain()
+    }
+}
+
 public class IPCReceiver<PayloadType: RawRepresentable>: IPCWrapper<PayloadType>, PortDelegate where PayloadType.RawValue == UInt, PayloadType: Codable {
     public typealias ReceiverCallback = (Payload, IPCSender<PayloadType>?, IPCReceiver) -> ()
     
-    public static func anonymousReceiver(loop: RunLoop = .main, _ responseHandler: @escaping ReceiverCallback) -> IPCReceiver {
+    public static func anonymousReceiver(loop: CFRunLoop = .main, _ responseHandler: @escaping ReceiverCallback) -> IPCReceiver {
         IPCReceiver(port: IPCReceivePort(loop: loop), mine: true, handleResponse: responseHandler)
     }
     
-    public static func serverReceiver(named name: String, loop: RunLoop = .main, _ responseHandler: @escaping ReceiverCallback) -> IPCReceiver {
+    public static func serverReceiver(named name: String, loop: CFRunLoop = .main, _ responseHandler: @escaping ReceiverCallback) -> IPCReceiver {
         var existingPort: mach_port_t = 0
         
         if bootstrap_check_in(bootstrap_port, name, &existingPort) == KERN_SUCCESS, existingPort != 0 {
