@@ -29,18 +29,18 @@ private extension PortMessage {
 public class IPCReceiver<PayloadType: RawRepresentable>: IPCWrapper<PayloadType>, PortDelegate where PayloadType.RawValue == UInt, PayloadType: Codable {
     public typealias ReceiverCallback = (Payload, IPCSender<PayloadType>?, IPCReceiver) -> ()
     
-    public static func anonymousReceiver(_ responseHandler: @escaping ReceiverCallback) -> IPCReceiver {
-        IPCReceiver(port: IPCReceivePort(), mine: true, handleResponse: responseHandler)
+    public static func anonymousReceiver(loop: RunLoop = .main, _ responseHandler: @escaping ReceiverCallback) -> IPCReceiver {
+        IPCReceiver(port: IPCReceivePort(loop: loop), mine: true, handleResponse: responseHandler)
     }
     
-    public static func serverReceiver(named name: String, _ responseHandler: @escaping ReceiverCallback) -> IPCReceiver {
+    public static func serverReceiver(named name: String, loop: RunLoop = .main, _ responseHandler: @escaping ReceiverCallback) -> IPCReceiver {
         var existingPort: mach_port_t = 0
         
         if bootstrap_check_in(bootstrap_port, name, &existingPort) == KERN_SUCCESS, existingPort != 0 {
-            return IPCReceiver(port: IPCWrapPort(existingPort), mine: true, handleResponse: responseHandler)
+            return IPCReceiver(port: IPCWrapPort(existingPort, loop: loop), mine: true, handleResponse: responseHandler)
         }
         
-        let receiver = IPCReceiver(port: IPCReceivePort(), mine: true, handleResponse: responseHandler)
+        let receiver = IPCReceiver(port: IPCReceivePort(loop: loop), mine: true, handleResponse: responseHandler)
         
         guard receiver.registerPort(withName: name) == KERN_SUCCESS else {
             fatalError("failed to register with bootstrap")
